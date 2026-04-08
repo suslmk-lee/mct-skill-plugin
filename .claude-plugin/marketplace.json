@@ -1,0 +1,18 @@
+{
+  "name": "mct-plugin",
+  "owner": {
+    "name": "suslmk-lee",
+    "email": "suslmk-lee@users.noreply.github.com"
+  },
+  "metadata": {
+    "description": "나만의 Claude Code 스킬 마켓플레이스"
+  },
+  "plugins": [
+    {
+      "name": "ls",
+      "source": "./plugins/ls",
+      "description": "Linear 이슈 관리와 Git 브랜치/PR 워크플로우를 통합하는 Claude Code 플러그인",
+      "version": "1.0.3"
+    }
+  ]
+}

@@ -1,0 +1,184 @@
+# MCT Plugin — Claude Code 스킬 마켓플레이스
+
+나만의 Claude Code 스킬을 한곳에서 관리하는 마켓플레이스입니다.  
+Linear 이슈 관리, Git 워크플로우, 프로젝트 자동화 등 여러 스킬을 통합 제공합니다.
+
+## 🎯 주요 기능
+
+### `ls` (Linear Skill)
+Linear 이슈 관리와 Git 브랜치/PR 워크플로우를 완전 통합합니다.
+
+#### 커맨드
+- **`/ls:setup`** — Linear API 키 등록, 팀 선택, 상태 매핑
+- **`/ls:start [ISSUE-KEY]`** — 이슈 컨텍스트 로드 및 Git 브랜치 생성
+- **`/ls:list`** — 팀의 활성 이슈 목록 조회 (내 이슈 우선)
+- **`/ls:done [ISSUE-KEY]`** — 이슈 완료 처리 및 상태 변경
+- **`/ls:pr`** — PR 초안 생성 및 발행
+- **`/ls:scan`** — 프로젝트 분석 후 이슈 일괄 등록
+- **`/ls:status`** — 현재 브랜치의 이슈 및 Git 상태 표시
+- **`/ls:sub [PARENT-KEY]`** — 서브이슈 등록
+- **`/ls:integrate [PARENT-KEY]`** — 서브이슈 통합 및 부모 PR 생성
+
+#### 자동 트리거
+```
+"이슈 시작해" → /ls:start 자동 실행
+"PR 만들어" → /ls:pr 자동 실행
+"완료했어" → /ls:done 자동 실행
+"이슈 목록 보여" → /ls:list 자동 실행
+```
+
+## 📋 시작하기
+
+### 1단계: 저장소 클론 또는 설치
+```bash
+# Claude Code에서 플러그인 설치
+git clone https://github.com/suslmk-lee/mct-plugin.git
+```
+
+### 2단계: Linear API 키 준비
+- [Linear 웹](https://linear.app) → Settings → API → Personal API Keys
+- 새 API 키 생성 후 메모
+
+### 3단계: 초기 설정 실행
+Claude Code에서:
+```
+/ls:setup
+```
+
+설정 과정:
+1. Linear API 키 입력
+2. 팀 선택 (예: Adevi, Backend 등)
+3. 워크플로우 상태 매핑 (In Progress, In Review, Done, Canceled)
+4. Git 기준 브랜치 선택 (main, master 등)
+
+## 📁 프로젝트 구조
+
+```
+mct-plugin/
+├── README.md                        # 이 파일
+├── SETUP.md                         # 상세 설정 가이드
+├── .gitignore                       # Git 제외 파일
+├── .claude/
+│   ├── linear.json.template         # 설정 템플릿
+│   └── linear.json.example          # 설정 예시
+├── .claude-plugin/
+│   └── marketplace.json             # 마켓플레이스 인덱스
+└── plugins/ls/
+    ├── .claude-plugin/plugin.json   # 플러그인 메타
+    ├── commands/                    # 커맨드 정의 (8개 .md)
+    │   ├── setup.md
+    │   ├── start.md
+    │   ├── list.md
+    │   ├── done.md
+    │   ├── pr.md
+    │   ├── scan.md
+    │   ├── status.md
+    │   ├── sub.md
+    │   └── integrate.md
+    └── skills/ls/
+        └── SKILL.md                 # 스킬 정의 및 규칙
+```
+
+## 🔄 워크플로우 예시
+
+### 이슈 시작부터 PR까지
+
+```bash
+# 1. 할당된 이슈 목록 확인
+/ls:list
+
+# 2. 특정 이슈로 작업 시작 (브랜치 자동 생성, 상태 변경)
+/ls:start ADE-24
+
+# 3. 코드 작성... (세션 컨텍스트에서 수락기준 확인)
+
+# 4. PR 생성 (수락기준 체크리스트 자동 포함)
+/ls:pr
+
+# 5. PR 머지 후 이슈 완료 처리
+/ls:done ADE-24
+```
+
+### 서브이슈 워크플로우
+
+```bash
+# 1. 부모 이슈에 서브이슈 등록
+/ls:sub ADE-20
+
+# 2. 각 서브이슈별로 작업
+/ls:start ADE-25
+/ls:start ADE-26
+# ... 코드 작성
+
+# 3. 모든 서브이슈 완료 후 통합
+/ls:integrate ADE-20  # 부모 PR 자동 생성
+```
+
+## ⚙️ 설정 파일
+
+### `.claude/linear.json`
+자동 생성되는 프로젝트 설정 파일:
+
+```json
+{
+  "team_id": "LINEAR_TEAM_UUID",
+  "team_key": "ADE",
+  "base_branch": "main",
+  "state_mapping": {
+    "in_progress": { "id": "...", "name": "In Progress" },
+    "in_review": { "id": "...", "name": "In Review" },
+    "done": { "id": "...", "name": "Done" },
+    "canceled": { "id": "...", "name": "Canceled" }
+  }
+}
+```
+
+**위치:**
+- 프로젝트별: `.claude/linear.json` (`.gitignore`에 등록됨)
+- 전역: `~/.config/linear/config.json` (API 키만)
+
+## 🛠️ 요구사항
+
+- **Claude Code** (CLI 또는 웹)
+- **Linear 계정** + API 키
+- **Git** 설치
+- **gh CLI** (PR 생성 시 필요)
+
+## 📚 추가 문서
+
+- **[SETUP.md](./SETUP.md)** — 상세 설정 가이드 및 문제 해결
+- **`plugins/ls/commands/`** — 각 커맨드별 실행 로직 상세 설명
+- **`plugins/ls/skills/ls/SKILL.md`** — 스킬 규칙 및 API 호출 가이드
+
+## 🚀 다음 스킬 추가하기
+
+`mct-plugin`은 여러 스킬을 지원하도록 설계되었습니다.
+
+### 새 스킬 추가 방법
+
+```
+plugins/[new-skill]/
+├── .claude-plugin/plugin.json
+├── commands/
+│   ├── cmd1.md
+│   └── cmd2.md
+└── skills/[new-skill]/
+    └── SKILL.md
+```
+
+1. `plugins/` 폴더 아래 새 폴더 생성
+2. `.claude-plugin/plugin.json` 작성
+3. 커맨드별 `.md` 파일 작성
+4. `marketplace.json` 업데이트
+
+## 📝 라이선스
+
+MIT License
+
+## 🤝 기여
+
+이슈 및 PR 환영합니다!
+
+---
+
+**시작하기:** [SETUP.md](./SETUP.md)를 참고하여 초기 설정을 완료하세요.

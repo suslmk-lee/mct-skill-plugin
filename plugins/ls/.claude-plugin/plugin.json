@@ -1,0 +1,8 @@
+{
+  "name": "ls",
+  "description": "Linear 이슈 컨텍스트 주입 + Git 브랜치/PR 워크플로우",
+  "author": {
+    "name": "suslmk-lee",
+    "email": "suslmk-lee@users.noreply.github.com"
+  }
+}

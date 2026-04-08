@@ -1,0 +1,23 @@
+{
+  "team_id": "team-uuid-12345678-abcd-efgh-ijkl-mnopqrstuvwx",
+  "team_key": "ADE",
+  "base_branch": "main",
+  "state_mapping": {
+    "in_progress": {
+      "id": "state-uuid-1111-1111-1111-111111111111",
+      "name": "In Progress"
+    },
+    "in_review": {
+      "id": "state-uuid-2222-2222-2222-222222222222",
+      "name": "In Review"
+    },
+    "done": {
+      "id": "state-uuid-3333-3333-3333-333333333333",
+      "name": "Done"
+    },
+    "canceled": {
+      "id": "state-uuid-4444-4444-4444-444444444444",
+      "name": "Canceled"
+    }
+  }
+}

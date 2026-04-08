@@ -1,0 +1,23 @@
+{
+  "team_id": "YOUR_LINEAR_TEAM_ID_HERE",
+  "team_key": "YOUR_TEAM_KEY",
+  "base_branch": "main",
+  "state_mapping": {
+    "in_progress": {
+      "id": "STATE_ID_FOR_IN_PROGRESS",
+      "name": "In Progress"
+    },
+    "in_review": {
+      "id": "STATE_ID_FOR_IN_REVIEW",
+      "name": "In Review"
+    },
+    "done": {
+      "id": "STATE_ID_FOR_DONE",
+      "name": "Done"
+    },
+    "canceled": {
+      "id": "STATE_ID_FOR_CANCELED",
+      "name": "Canceled"
+    }
+  }
+}
