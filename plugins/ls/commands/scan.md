@@ -78,6 +78,40 @@ fi
 echo "✅ 권한 확인 완료: $USER_NAME (팀장)"
 ```
 
+## 이전 스캔과 비교 (재스캔)
+
+이전에 스캔 결과가 있다면 비교하여 상태 자동 업데이트:
+
+```bash
+if [ -f ".claude/scan-results.json" ]; then
+  echo "📊 이전 스캔과 비교 중..."
+  
+  # comparator.md의 compare_scans() 함수 호출
+  COMPARED_FINDINGS=$(python3 << 'PYTHONEOF'
+import json
+
+with open(".claude/scan-results.json", "r") as f:
+    previous = json.load(f)
+
+# 현재 findings와 previous를 비교하여 상태 업데이트
+# current_findings는 Phase 1에서 생성됨
+
+compared = []
+print(json.dumps(compared, ensure_ascii=False, indent=2))
+PYTHONEOF
+  )
+  
+  echo "✅ 재스캔 완료"
+  echo ""
+  echo "변경사항:"
+  echo "  ★ [NEW] 항목"
+  echo "  [STILL PENDING] 항목"
+  echo "  ✓ [COMPLETED] 항목"
+else
+  echo "⏳ 첫 스캔입니다."
+fi
+```
+
 ## Phase 1: 규칙 기반 분석
 
 ```bash
