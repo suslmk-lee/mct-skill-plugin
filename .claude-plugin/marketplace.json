@@ -37,17 +37,7 @@
       "source": "./plugins/ls",
       "description": "Linear 이슈 관리와 Git 브랜치/PR 워크플로우를 완전 통합하고, 레포지토리를 자동으로 분석하여 개선 항목을 발견하는 Claude Code 플러그인",
       "version": "1.0.4",
-      "commands": [
-        "ls:setup",
-        "ls:start",
-        "ls:list",
-        "ls:done",
-        "ls:pr",
-        "ls:scan",
-        "ls:status",
-        "ls:sub",
-        "ls:integrate"
-      ],
+      "category": "productivity",
       "keywords": [
         "linear",
         "issue",
@@ -57,7 +47,8 @@
         "repository-analysis",
         "automation"
       ],
-      "icon": "🔗"
+      "homepage": "https://github.com/suslmk-lee/mct-plugin",
+      "author": "suslmk-lee"
     }
   ]
 }

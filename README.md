@@ -1,31 +1,38 @@
-# MCT Plugin — Claude Code 스킬 마켓플레이스
+# MCT Plugin — Linear Skill Marketplace
 
-나만의 Claude Code 스킬을 한곳에서 관리하는 마켓플레이스입니다.  
-Linear 이슈 관리, Git 워크플로우, 프로젝트 자동화 등 여러 스킬을 통합 제공합니다.
+Linear 이슈 관리와 Git 브랜치/PR 워크플로우를 통합하는 Claude Code 플러그인입니다.
 
-## 🎯 주요 기능
+이슈를 시작하면 Claude가 이슈 설명, 수락 기준을 컨텍스트에 로드합니다. 이후 코드 작성 중 참고할 수 있습니다.
 
-### `ls` (Linear Skill)
-Linear 이슈 관리와 Git 브랜치/PR 워크플로우를 완전 통합합니다.
+## 🔧 설치
 
-#### 커맨드
-- **`/ls:setup`** — Linear API 키 등록, 팀 선택, 상태 매핑
-- **`/ls:start [ISSUE-KEY]`** — 이슈 컨텍스트 로드 및 Git 브랜치 생성
-- **`/ls:list`** — 팀의 활성 이슈 목록 조회 (내 이슈 우선)
-- **`/ls:done [ISSUE-KEY]`** — 이슈 완료 처리 및 상태 변경
-- **`/ls:pr`** — PR 초안 생성 및 발행
-- **`/ls:scan`** — 프로젝트 분석 후 이슈 일괄 등록
-- **`/ls:status`** — 현재 브랜치의 이슈 및 Git 상태 표시
-- **`/ls:sub [PARENT-KEY]`** — 서브이슈 등록
-- **`/ls:integrate [PARENT-KEY]`** — 서브이슈 통합 및 부모 PR 생성
-
-#### 자동 트리거
+```bash
+/plugin marketplace add suslmk-lee/mct-plugin
+/plugin install ls@mct-plugin
+/reload-plugins
 ```
-"이슈 시작해" → /ls:start 자동 실행
-"PR 만들어" → /ls:pr 자동 실행
-"완료했어" → /ls:done 자동 실행
-"이슈 목록 보여" → /ls:list 자동 실행
+
+## 🚀 초기 설정
+
+```bash
+/ls:setup
 ```
+
+Linear API 키, 팀, 워크플로우 상태 매핑, Slack Webhook을 설정합니다.
+
+## 🎯 커맨드
+
+| 커맨드 | 설명 |
+|--------|------|
+| `/ls:setup` | 초기 설정 |
+| `/ls:start [ISSUE-KEY]` | 이슈 시작 — 이슈 컨텍스트 로드 + 브랜치 생성 |
+| `/ls:list` | 이슈 목록 (내 이슈 우선) |
+| `/ls:done [ISSUE-KEY]` | 이슈 완료 처리 |
+| `/ls:pr` | PR 생성 |
+| `/ls:scan` | 프로젝트 분석 후 이슈 일괄 등록 (팀장만) |
+| `/ls:status` | 현재 브랜치 상태 |
+| `/ls:sub [PARENT-KEY]` | 서브이슈 등록 |
+| `/ls:integrate [PARENT-KEY]` | 서브이슈 통합 및 PR 생성 |
 
 ### `/ls:scan` — 레포지토리 분석 후 선택적 이슈 등록
 
