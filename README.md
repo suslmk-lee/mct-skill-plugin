@@ -100,25 +100,40 @@ mct-plugin/
 ├── README.md                        # 이 파일
 ├── SETUP.md                         # 상세 설정 가이드
 ├── .gitignore                       # Git 제외 파일
+├── docs/                            # 설계 & 계획 문서 (git 추적)
+│   └── superpowers/
+│       ├── specs/
+│       │   └── 2026-04-09-ls-scan-expansion-design.md
+│       └── plans/
+│           └── 2026-04-09-ls-scan-implementation.md
+├── tests/                           # 테스트 케이스
+│   └── ls_scan_test.md
 ├── .claude/
-│   ├── linear.json.template         # 설정 템플릿
-│   └── linear.json.example          # 설정 예시
+│   ├── linear.json.template         # 설정 템플릿 (미포함)
+│   ├── linear.json.example          # 설정 예시 (미포함)
+│   ├── linear.json                  # 프로젝트 설정 (git 제외)
+│   └── scan-results.json            # 스캔 결과 (git 제외)
 ├── .claude-plugin/
 │   └── marketplace.json             # 마켓플레이스 인덱스
 └── plugins/ls/
     ├── .claude-plugin/plugin.json   # 플러그인 메타
-    ├── commands/                    # 커맨드 정의 (8개 .md)
-    │   ├── setup.md
-    │   ├── start.md
-    │   ├── list.md
-    │   ├── done.md
-    │   ├── pr.md
-    │   ├── scan.md
-    │   ├── status.md
-    │   ├── sub.md
-    │   └── integrate.md
+    ├── commands/                    # 커맨드 정의 (9개 .md)
+    │   ├── setup.md                 # /ls:setup
+    │   ├── start.md                 # /ls:start
+    │   ├── list.md                  # /ls:list
+    │   ├── done.md                  # /ls:done
+    │   ├── pr.md                    # /ls:pr
+    │   ├── scan.md                  # /ls:scan ⭐ NEW
+    │   ├── status.md                # /ls:status
+    │   ├── sub.md                   # /ls:sub
+    │   └── integrate.md             # /ls:integrate
     └── skills/ls/
-        └── SKILL.md                 # 스킬 정의 및 규칙
+        ├── SKILL.md                 # 스킬 정의 및 규칙
+        ├── auth.md                  # 권한 검증 ⭐ NEW
+        └── analyzers/               # 분석 모듈들 ⭐ NEW
+            ├── phase1-rules.md      # Phase 1: 규칙 기반 분석
+            ├── phase2-llm.md        # Phase 2: LLM 상세 분석
+            └── comparator.md        # 재스캔 & 상태 추적
 ```
 
 ## 🔄 워크플로우 예시

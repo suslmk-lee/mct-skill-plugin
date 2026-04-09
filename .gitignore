@@ -50,8 +50,10 @@ temp/
 .claude/settings.local.json
 
 # bkit metadata (session-specific)
-# docs/ — except design specs
-docs/superpowers/
+# docs/ — design specs only
+/docs/
+!/docs/superpowers/
+!/docs/superpowers/**
 
 # Test coverage
 coverage/
