@@ -1,0 +1,26 @@
+{
+  "name": "ls",
+  "displayName": "Linear Skill",
+  "version": "1.0.4",
+  "description": "Linear 이슈 관리와 Git 브랜치/PR 워크플로우를 완전 통합하고, 레포지토리를 자동으로 분석하여 개선 항목을 발견하는 Claude Code 플러그인",
+  "author": "suslmk-lee",
+  "license": "MIT",
+  "category": "productivity",
+  "keywords": [
+    "linear",
+    "issue",
+    "git",
+    "branch",
+    "pr",
+    "repository-analysis",
+    "automation"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/suslmk-lee/mct-plugin.git"
+  },
+  "bugs": {
+    "url": "https://github.com/suslmk-lee/mct-plugin/issues"
+  },
+  "homepage": "https://github.com/suslmk-lee/mct-plugin"
+}

@@ -1,30 +1,79 @@
-# MCT Plugin — Claude Code 스킬 마켓플레이스
+# MCT Plugin — Linear Skill Marketplace
 
-나만의 Claude Code 스킬을 한곳에서 관리하는 마켓플레이스입니다.  
-Linear 이슈 관리, Git 워크플로우, 프로젝트 자동화 등 여러 스킬을 통합 제공합니다.
+Linear 이슈 관리와 Git 브랜치/PR 워크플로우를 통합하는 Claude Code 플러그인입니다.
 
-## 🎯 주요 기능
+이슈를 시작하면 Claude가 이슈 설명, 수락 기준을 컨텍스트에 로드합니다. 이후 코드 작성 중 참고할 수 있습니다.
 
-### `ls` (Linear Skill)
-Linear 이슈 관리와 Git 브랜치/PR 워크플로우를 완전 통합합니다.
+## 🔧 설치
 
-#### 커맨드
-- **`/ls:setup`** — Linear API 키 등록, 팀 선택, 상태 매핑
-- **`/ls:start [ISSUE-KEY]`** — 이슈 컨텍스트 로드 및 Git 브랜치 생성
-- **`/ls:list`** — 팀의 활성 이슈 목록 조회 (내 이슈 우선)
-- **`/ls:done [ISSUE-KEY]`** — 이슈 완료 처리 및 상태 변경
-- **`/ls:pr`** — PR 초안 생성 및 발행
-- **`/ls:scan`** — 프로젝트 분석 후 이슈 일괄 등록
-- **`/ls:status`** — 현재 브랜치의 이슈 및 Git 상태 표시
-- **`/ls:sub [PARENT-KEY]`** — 서브이슈 등록
-- **`/ls:integrate [PARENT-KEY]`** — 서브이슈 통합 및 부모 PR 생성
-
-#### 자동 트리거
+```bash
+/plugin marketplace add suslmk-lee/mct-plugin
+/plugin install ls@mct-plugin
+/reload-plugins
 ```
-"이슈 시작해" → /ls:start 자동 실행
-"PR 만들어" → /ls:pr 자동 실행
-"완료했어" → /ls:done 자동 실행
-"이슈 목록 보여" → /ls:list 자동 실행
+
+## 🚀 초기 설정
+
+```bash
+/ls:setup
+```
+
+Linear API 키, 팀, 워크플로우 상태 매핑, Slack Webhook을 설정합니다.
+
+## 🎯 커맨드
+
+| 커맨드 | 설명 |
+|--------|------|
+| `/ls:setup` | 초기 설정 |
+| `/ls:start [ISSUE-KEY]` | 이슈 시작 — 이슈 컨텍스트 로드 + 브랜치 생성 |
+| `/ls:list` | 이슈 목록 (내 이슈 우선) |
+| `/ls:done [ISSUE-KEY]` | 이슈 완료 처리 |
+| `/ls:pr` | PR 생성 |
+| `/ls:scan` | 프로젝트 분석 후 이슈 일괄 등록 (팀장만) |
+| `/ls:status` | 현재 브랜치 상태 |
+| `/ls:sub [PARENT-KEY]` | 서브이슈 등록 |
+| `/ls:integrate [PARENT-KEY]` | 서브이슈 통합 및 PR 생성 |
+
+### `/ls:scan` — 레포지토리 분석 후 선택적 이슈 등록
+
+팀장만 사용할 수 있는 고급 기능으로, 현재 레포지토리를 자동으로 분석하여 기능 개선, 코드 품질, 문서화 등의 항목을 발견하고 **선택적으로** Linear 이슈로 등록합니다.
+
+#### 분석 방식
+
+- **Phase 1 (규칙 기반)**: 파일 구조, 문서, 테스트, 코드 크기 등을 정적으로 분석 (빠름)
+- **Phase 2 (LLM)**: Phase 1에서 발견한 항목만 Claude로 깊이 있게 분석 (깊음)
+
+#### 기능
+
+- 📊 6가지 카테고리 자동 검사 (문서화, 테스트, 코드품질, 의존성, 구조, 자동화)
+- 🔐 팀장 전용 (권한 검증)
+- ✅ 부모-자식 계층 구조로 이슈 생성
+- 📋 프리뷰 후 선택적 생성 (승인/거부/연기)
+- 🔄 재스캔 지원 (변경사항 자동 감지)
+- 💾 결과 저장 및 히스토리 추적
+
+#### 사용 예시
+
+```bash
+# 레포지토리 분석
+/ls:scan
+
+# 결과 미리보기
+/ls:scan --report
+
+# 이전 스캔과 비교
+/ls:scan --compare 2026-04-02
+
+# 특정 카테고리만 재분석
+/ls:scan --category=tests
+```
+
+#### 권한 설정
+
+초기 설정 시:
+```bash
+/ls:setup
+# Step 5에서 "스캔 권한 활성화?" 질문에 [Y] 선택
 ```
 
 ## 📋 시작하기
@@ -58,25 +107,40 @@ mct-plugin/
 ├── README.md                        # 이 파일
 ├── SETUP.md                         # 상세 설정 가이드
 ├── .gitignore                       # Git 제외 파일
+├── docs/                            # 설계 & 계획 문서 (git 추적)
+│   └── superpowers/
+│       ├── specs/
+│       │   └── 2026-04-09-ls-scan-expansion-design.md
+│       └── plans/
+│           └── 2026-04-09-ls-scan-implementation.md
+├── tests/                           # 테스트 케이스
+│   └── ls_scan_test.md
 ├── .claude/
-│   ├── linear.json.template         # 설정 템플릿
-│   └── linear.json.example          # 설정 예시
+│   ├── linear.json.template         # 설정 템플릿 (미포함)
+│   ├── linear.json.example          # 설정 예시 (미포함)
+│   ├── linear.json                  # 프로젝트 설정 (git 제외)
+│   └── scan-results.json            # 스캔 결과 (git 제외)
 ├── .claude-plugin/
 │   └── marketplace.json             # 마켓플레이스 인덱스
 └── plugins/ls/
     ├── .claude-plugin/plugin.json   # 플러그인 메타
-    ├── commands/                    # 커맨드 정의 (8개 .md)
-    │   ├── setup.md
-    │   ├── start.md
-    │   ├── list.md
-    │   ├── done.md
-    │   ├── pr.md
-    │   ├── scan.md
-    │   ├── status.md
-    │   ├── sub.md
-    │   └── integrate.md
+    ├── commands/                    # 커맨드 정의 (9개 .md)
+    │   ├── setup.md                 # /ls:setup
+    │   ├── start.md                 # /ls:start
+    │   ├── list.md                  # /ls:list
+    │   ├── done.md                  # /ls:done
+    │   ├── pr.md                    # /ls:pr
+    │   ├── scan.md                  # /ls:scan ⭐ NEW
+    │   ├── status.md                # /ls:status
+    │   ├── sub.md                   # /ls:sub
+    │   └── integrate.md             # /ls:integrate
     └── skills/ls/
-        └── SKILL.md                 # 스킬 정의 및 규칙
+        ├── SKILL.md                 # 스킬 정의 및 규칙
+        ├── auth.md                  # 권한 검증 ⭐ NEW
+        └── analyzers/               # 분석 모듈들 ⭐ NEW
+            ├── phase1-rules.md      # Phase 1: 규칙 기반 분석
+            ├── phase2-llm.md        # Phase 2: LLM 상세 분석
+            └── comparator.md        # 재스캔 & 상태 추적
 ```
 
 ## 🔄 워크플로우 예시
