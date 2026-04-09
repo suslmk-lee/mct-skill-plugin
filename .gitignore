@@ -52,8 +52,8 @@ temp/
 # bkit metadata (session-specific)
 # docs/ — design specs only
 /docs/
-!/docs/superpowers/
-!/docs/superpowers/**
+/docs/superpowers/
+/docs/superpowers/**
 
 # Test coverage
 coverage/
