@@ -1,60 +1,22 @@
 {
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "mct-plugin",
-  "version": "1.0.4",
-  "displayName": "MCT Plugin - Linear Skill Marketplace",
   "description": "Linear 이슈 관리 + Git 워크플로우 + 자동 리포지토리 분석을 통합하는 Claude Code 플러그인 마켓플레이스",
-  "author": {
-    "name": "suslmk-lee",
-    "email": "suslmk-lee@users.noreply.github.com"
-  },
   "owner": {
     "name": "suslmk-lee",
     "email": "suslmk-lee@users.noreply.github.com"
   },
-  "license": "MIT",
-  "keywords": [
-    "linear",
-    "issue-management",
-    "git",
-    "workflow",
-    "repository-analysis",
-    "claude-code"
-  ],
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/suslmk-lee/mct-plugin.git"
-  },
-  "bugs": {
-    "url": "https://github.com/suslmk-lee/mct-plugin/issues"
-  },
-  "homepage": "https://github.com/suslmk-lee/mct-plugin",
-  "metadata": {
-    "description": "Linear 이슈 관리 + Git 워크플로우 + 리포지토리 분석 통합",
-    "category": "productivity",
-    "tags": ["linear", "git", "automation", "analysis"]
-  },
   "plugins": [
     {
       "name": "ls",
-      "displayName": "Linear Skill",
-      "source": "./plugins/ls",
       "description": "Linear 이슈 관리와 Git 브랜치/PR 워크플로우를 완전 통합하고, 레포지토리를 자동으로 분석하여 개선 항목을 발견하는 Claude Code 플러그인",
       "version": "1.0.4",
-      "category": "productivity",
-      "keywords": [
-        "linear",
-        "issue",
-        "git",
-        "branch",
-        "pr",
-        "repository-analysis",
-        "automation"
-      ],
-      "homepage": "https://github.com/suslmk-lee/mct-plugin",
       "author": {
         "name": "suslmk-lee",
         "email": "suslmk-lee@users.noreply.github.com"
-      }
+      },
+      "source": "./plugins/ls",
+      "category": "productivity"
     }
   ]
 }
