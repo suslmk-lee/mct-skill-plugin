@@ -3,6 +3,9 @@
   "displayName": "Linear Skill",
   "version": "1.0.4",
   "description": "Linear 이슈 컨텍스트 주입 + Git 브랜치/PR 워크플로우 + 자동 레포지토리 분석",
-  "author": "suslmk-lee",
+  "author": {
+    "name": "suslmk-lee",
+    "email": "suslmk-lee@users.noreply.github.com"
+  },
   "license": "MIT"
 }
