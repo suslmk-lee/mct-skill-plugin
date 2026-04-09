@@ -4,5 +4,39 @@
   "author": {
     "name": "suslmk-lee",
     "email": "suslmk-lee@users.noreply.github.com"
+  },
+  "commands": {
+    "list": {
+      "description": "이슈 목록 조회",
+      "requires_role": null
+    },
+    "start": {
+      "description": "이슈 시작",
+      "requires_role": null
+    },
+    "done": {
+      "description": "이슈 완료",
+      "requires_role": null
+    },
+    "pr": {
+      "description": "PR 생성",
+      "requires_role": null
+    },
+    "status": {
+      "description": "현재 상태 확인",
+      "requires_role": null
+    },
+    "sub": {
+      "description": "서브이슈 등록",
+      "requires_role": null
+    },
+    "integrate": {
+      "description": "서브이슈 통합",
+      "requires_role": null
+    },
+    "scan": {
+      "description": "레포지토리 분석 후 이슈 등록",
+      "requires_role": "admin"
+    }
   }
 }
