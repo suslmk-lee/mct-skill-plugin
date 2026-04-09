@@ -1,6 +1,8 @@
 # /ls:list — 이슈 목록 조회
 
-You are executing `/ls:list`. Follow these steps in order.
+List command starts now. Execute the following steps sequentially.
+
+**이 명령을 시작합니다.**
 
 ## Step 1: Load Configuration
 

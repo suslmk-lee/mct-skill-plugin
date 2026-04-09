@@ -1,6 +1,8 @@
 # /ls:sub [PARENT-KEY] — 서브이슈 등록
 
-You are executing `/ls:sub [PARENT-KEY]`. Follow these steps in order. This creates one or more sub-issues under a parent issue.
+Sub-issue creation starts now. Execute the following steps to create child issues under a parent.
+
+**이 명령을 시작합니다.**
 
 ## Step 1: Load Configuration
 

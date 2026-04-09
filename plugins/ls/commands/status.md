@@ -1,6 +1,8 @@
 # /ls:status — 현재 작업 스냅샷
 
-You are executing `/ls:status`. Follow these steps in order.
+Status check starts now. Execute the following steps sequentially.
+
+**이 명령을 시작합니다.**
 
 ## Step 1: Extract Issue Key from Current Branch
 

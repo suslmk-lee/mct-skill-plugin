@@ -1,6 +1,8 @@
 # /ls:integrate [PARENT-KEY] — 서브이슈 통합 및 부모 PR 생성
 
-You are executing `/ls:integrate [PARENT-KEY]`. Follow these steps in order. This merges sub-issue branches into the parent branch and creates a parent PR.
+Integrate sub-issues starts now. Execute the following steps to merge and create a parent PR.
+
+**이 명령을 시작합니다.**
 
 ## Step 1: Load Configuration
 

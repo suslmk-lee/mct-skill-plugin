@@ -1,6 +1,8 @@
 # /ls:done [ISSUE-KEY] — 이슈 완료
 
-You are executing `/ls:done [ISSUE-KEY]`. Follow these steps in order. This marks a Linear issue as Done and checks for sub-issues.
+Mark issue as done starts now. Execute the following steps to complete an issue.
+
+**이 명령을 시작합니다.**
 
 ## Step 1: Load Configuration
 

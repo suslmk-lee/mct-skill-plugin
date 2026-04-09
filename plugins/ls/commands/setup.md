@@ -1,6 +1,8 @@
 # /ls:setup — Linear 초기 설정
 
-You are executing `/ls:setup`. Follow these steps in order. This is a one-time setup that configures your Linear API key, team selection, workflow state mappings, base branch, and scan permissions.
+Setup begins now. Execute the following steps in sequence to configure Linear API integration.
+
+**이 명령을 시작합니다.** 다음 단계를 순서대로 실행하세요.
 
 ## Step 1: Check for Existing API Key
 

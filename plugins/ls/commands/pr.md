@@ -1,6 +1,8 @@
 # /ls:pr — PR 생성
 
-You are executing `/ls:pr`. Follow these steps in order. This creates a GitHub pull request for the current branch's Linear issue.
+PR creation starts now. Execute the following steps to create a GitHub pull request.
+
+**이 명령을 시작합니다.**
 
 ## Step 1: Load Configuration
 

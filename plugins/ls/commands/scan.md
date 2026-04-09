@@ -1,6 +1,8 @@
 # /ls:scan — 레포지토리 분석 후 선택적 이슈 생성
 
-You are executing `/ls:scan`. Follow these steps in order. This analyzes the repository for improvement areas and creates Linear issues selectively. **Admin-only.**
+Repository scan starts now. Execute the following steps to analyze and create issues. **Admin-only.**
+
+**이 명령을 시작합니다.**
 
 ## Step 1: Check Permissions
 

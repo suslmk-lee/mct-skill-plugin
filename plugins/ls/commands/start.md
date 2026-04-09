@@ -1,6 +1,8 @@
 # /ls:start [ISSUE-KEY] — 작업 세션 시작
 
-You are executing `/ls:start [ISSUE-KEY]`. Follow these steps in order. This loads an issue from Linear and creates a Git branch to begin work.
+Start command begins now. Execute the following steps to load an issue and create a working branch.
+
+**이 명령을 시작합니다.**
 
 ## Step 1: Load Configuration
 
