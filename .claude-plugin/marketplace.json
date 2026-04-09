@@ -12,7 +12,11 @@
       "name": "ls",
       "source": "./plugins/ls",
       "description": "Linear 이슈 관리와 Git 브랜치/PR 워크플로우를 통합하는 Claude Code 플러그인",
-      "version": "1.0.3"
+      "version": "1.0.3",
+      "author": {
+        "name": "suslmk-lee",
+        "email": "suslmk-lee@users.noreply.github.com"
+      }
     }
   ]
 }
