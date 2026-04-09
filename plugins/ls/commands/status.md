@@ -1,70 +1,74 @@
 # /ls:status — 현재 작업 스냅샷
 
-현재 브랜치에 연결된 Linear 이슈와 Git 상태를 표시합니다.
+You are executing `/ls:status`. Follow these steps in order.
 
-## Step 1: 브랜치에서 이슈 키 추출
+## Step 1: Extract Issue Key from Current Branch
+
+Run:
 
 ```bash
-export PYTHONIOENCODING=utf-8
-CURRENT_BRANCH=$(git branch --show-current 2>/dev/null)
-ISSUE_KEY=$(echo "$CURRENT_BRANCH" | grep -oP '^[a-z]+-\d+' | tr '[:lower:]' '[:upper:]')
-if [ -z "$ISSUE_KEY" ]; then
-  echo "Linear 이슈와 연결된 브랜치가 아닙니다. (현재 브랜치: $CURRENT_BRANCH)"
-  exit 0
-fi
+CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
+ISSUE_KEY=$(echo "$CURRENT_BRANCH" | grep -oE '^[a-z]+-[0-9]+' || echo "")
+echo "ISSUE_KEY=$ISSUE_KEY"
 ```
 
-## Step 2: 설정 로드
+If `ISSUE_KEY` is empty, tell the user: "Linear 이슈와 연결된 브랜치가 아닙니다. (현재 브랜치: {CURRENT_BRANCH})" and stop.
+
+## Step 2: Load Configuration
+
+Check for the Linear API key:
 
 ```bash
-API_KEY="$LINEAR_API_KEY"
+API_KEY="${LINEAR_API_KEY}"
 if [ -z "$API_KEY" ]; then
   API_KEY=$(python3 -c "
 import json, os
 p = os.path.expanduser('~/.config/linear/config.json')
-if os.path.exists(p): print(json.load(open(p)).get('api_key', ''))
-" 2>/dev/null)
+if os.path.exists(p):
+    print(json.load(open(p)).get('api_key', ''))
+" 2>/dev/null || echo "")
 fi
-if [ -z "$API_KEY" ]; then echo "API 키 없음. /ls:setup을 먼저 실행하세요"; exit 1; fi
-if [ ! -f ".claude/linear.json" ]; then echo "프로젝트 설정 없음. /ls:setup을 먼저 실행하세요"; exit 1; fi
+echo "API_KEY_SET=${#API_KEY}"
 ```
 
-## Step 3: 이슈 상태 조회
+If `API_KEY` is empty, tell the user: "Linear API 키가 설정되지 않았습니다. 먼저 /ls:setup을 실행하세요."
+
+## Step 3: Fetch Issue Status
+
+Extract the team key and issue number from `$ISSUE_KEY` (e.g., `ADE-24` → team=`ade`, number=`24`).
+
+Run:
 
 ```bash
-ISSUE_TEAM=$(echo "$ISSUE_KEY" | tr '[:upper:]' '[:lower:]' | cut -d'-' -f1)
-ISSUE_NUM=$(echo "$ISSUE_KEY" | cut -d'-' -f2)
-
-TMPFILE=$(mktemp /tmp/linear-XXXXXX.json)
-python3 -c "
-import json, sys
-team, num = sys.argv[1], int(sys.argv[2])
-q = '''{ issues(filter: {
-  team: { key: { eq: \"''' + team + '''\" } },
-  number: { eq: ''' + str(num) + ''' }
-}) { nodes { identifier title state { name } } } }'''
-print(json.dumps({'query': q}))
-" "$ISSUE_TEAM" "$ISSUE_NUM" > "$TMPFILE"
-RESPONSE=$(curl -s -X POST https://api.linear.app/graphql \
-  -H "Authorization: $API_KEY" -H "Content-Type: application/json" \
-  --data-binary "@$TMPFILE")
-rm -f "$TMPFILE"
-echo "$RESPONSE"
+curl -s -X POST https://api.linear.app/graphql \
+  -H "Authorization: $API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"query": "{ issues(filter: {team: {key: {eq: \"TEAM_KEY\"}}, number: {eq: ISSUE_NUMBER}}) { nodes { identifier title state { name } } } }"}'
 ```
 
-## Step 4: Git 상태 확인
+Parse the response and extract:
+- `issues.nodes[0].identifier` → `$ISSUE_KEY_RESOLVED`
+- `issues.nodes[0].title` → `$ISSUE_TITLE`
+- `issues.nodes[0].state.name` → `$ISSUE_STATE`
+
+If no issue is found, tell the user: "이슈를 찾을 수 없습니다." and stop.
+
+## Step 4: Check Git Status
+
+Run:
 
 ```bash
 git status --short
 ```
 
-## Step 5: 결과 출력
+Count the number of lines. If 0, set `$GIT_STATUS_TEXT="없음"`. Otherwise, set it to the count (e.g., "3 files").
 
+## Step 5: Display Status
+
+Tell the user:
 ```
 현재 작업: {ISSUE_KEY} — {ISSUE_TITLE}
 상태: {ISSUE_STATE}
 브랜치: {CURRENT_BRANCH}
-미커밋 변경: {git status --short 줄 수} files
+미커밋 변경: {GIT_STATUS_TEXT}
 ```
-
-미커밋 변경이 없으면 "미커밋 변경: 없음"으로 표시합니다.

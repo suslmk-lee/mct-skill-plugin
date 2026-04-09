@@ -1,74 +1,63 @@
 # /ls:sub [PARENT-KEY] — 서브이슈 등록
 
-특정 이슈 하위에 서브이슈를 생성합니다.
+You are executing `/ls:sub [PARENT-KEY]`. Follow these steps in order. This creates one or more sub-issues under a parent issue.
 
-## Step 1: 설정 로드
+## Step 1: Load Configuration
+
+Check for the Linear API key:
 
 ```bash
-export PYTHONIOENCODING=utf-8
-API_KEY="$LINEAR_API_KEY"
+API_KEY="${LINEAR_API_KEY}"
 if [ -z "$API_KEY" ]; then
   API_KEY=$(python3 -c "
 import json, os
 p = os.path.expanduser('~/.config/linear/config.json')
-if os.path.exists(p): print(json.load(open(p)).get('api_key', ''))
-" 2>/dev/null)
+if os.path.exists(p):
+    print(json.load(open(p)).get('api_key', ''))
+" 2>/dev/null || echo "")
 fi
-if [ -z "$API_KEY" ]; then echo "API 키 없음. /ls:setup을 먼저 실행하세요"; exit 1; fi
-if [ ! -f ".claude/linear.json" ]; then echo "프로젝트 설정 없음. /ls:setup을 먼저 실행하세요"; exit 1; fi
-TEAM_ID=$(python3 -c "import json; print(json.load(open('.claude/linear.json'))['team_id'])")
-TEAM_KEY=$(python3 -c "import json; print(json.load(open('.claude/linear.json'))['team_key'])")
+echo "API_KEY_SET=${#API_KEY}"
 ```
 
-## Step 2: 부모 이슈 UUID 조회
+If `API_KEY` is empty, tell the user: "Linear API 키가 설정되지 않았습니다. 먼저 /ls:setup을 실행하세요."
 
-PARENT-KEY 인자가 없으면 현재 브랜치에서 이슈 키를 추출합니다:
+Read `.claude/linear.json` and extract:
+- `team_id`
+- `team_key`
+
+## Step 2: Resolve Parent Issue
+
+If no `[PARENT-KEY]` argument was provided, try to extract it from the current Git branch:
 
 ```bash
-if [ -z "$PARENT_KEY" ]; then
-  CURRENT_BRANCH=$(git branch --show-current 2>/dev/null)
-  PARENT_KEY=$(echo "$CURRENT_BRANCH" | grep -oE '^[a-zA-Z]+-[0-9]+' | tr '[:lower:]' '[:upper:]')
-fi
-if [ -z "$PARENT_KEY" ]; then
-  echo "부모 이슈 키를 입력하세요 (예: ADE-24):"
-fi
+CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
+PARENT_KEY=$(echo "$CURRENT_BRANCH" | grep -oE '^[a-z]+-[0-9]+' || echo "")
+echo "PARENT_KEY=$PARENT_KEY"
 ```
 
-부모 이슈 UUID + 상세 조회:
+If `PARENT_KEY` is still empty, ask the user:
+> "부모 이슈 키를 입력하세요 (예: ADE-24):"
+
+Extract team and number from `$PARENT_KEY` (e.g., `ADE-24` → team=`ade`, number=`24`).
+
+Run:
 
 ```bash
-PARENT_TEAM=$(echo "$PARENT_KEY" | tr '[:upper:]' '[:lower:]' | cut -d'-' -f1)
-PARENT_NUM=$(echo "$PARENT_KEY" | cut -d'-' -f2)
-
-TMPFILE=$(mktemp /tmp/linear-XXXXXX.json)
-python3 -c "
-import json, sys
-team, num = sys.argv[1], int(sys.argv[2])
-q = '''{ issues(filter: {
-  team: { key: { eq: \"''' + team + '''\" } },
-  number: { eq: ''' + str(num) + ''' }
-}) { nodes { id identifier title children { nodes { identifier title state { name } } } } } }'''
-print(json.dumps({'query': q}))
-" "$PARENT_TEAM" "$PARENT_NUM" > "$TMPFILE"
-RESPONSE=$(curl -s -X POST https://api.linear.app/graphql \
-  -H "Authorization: $API_KEY" -H "Content-Type: application/json" \
-  --data-binary "@$TMPFILE")
-rm -f "$TMPFILE"
-
-PARENT_UUID=$(echo "$RESPONSE" | python3 -c "
-import json, sys
-nodes = json.load(sys.stdin)['data']['issues']['nodes']
-print(nodes[0]['id'] if nodes else '')
-")
-PARENT_TITLE=$(echo "$RESPONSE" | python3 -c "
-import json, sys
-nodes = json.load(sys.stdin)['data']['issues']['nodes']
-print(nodes[0]['title'] if nodes else '')
-")
-if [ -z "$PARENT_UUID" ]; then echo "이슈를 찾을 수 없습니다: $PARENT_KEY"; exit 1; fi
+curl -s -X POST https://api.linear.app/graphql \
+  -H "Authorization: $API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"query": "{ issues(filter: {team: {key: {eq: \"TEAM\"}}, number: {eq: NUMBER}}) { nodes { id identifier title children { nodes { identifier title state { name } } } } } }"}'
 ```
 
-기존 서브이슈가 있으면 목록을 표시합니다:
+Parse the response and extract:
+- `issues.nodes[0].id` → `$PARENT_UUID`
+- `issues.nodes[0].identifier` → `$PARENT_KEY_RESOLVED`
+- `issues.nodes[0].title` → `$PARENT_TITLE`
+- `issues.nodes[0].children.nodes[]` → existing sub-issues array
+
+If no issue is found, tell the user: "이슈를 찾을 수 없습니다: {PARENT_KEY}" and stop.
+
+If existing sub-issues are found, display them:
 
 ```
 부모 이슈: ADE-24 — 로그 레벨 분리
@@ -78,57 +67,46 @@ if [ -z "$PARENT_UUID" ]; then echo "이슈를 찾을 수 없습니다: $PARENT_
   ADE-29  Todo  환경변수 로딩 모듈
 ```
 
-## Step 3: 서브이슈 입력
+## Step 3: Collect Sub-Issue Titles
 
-사용자에게 서브이슈 목록을 입력받습니다:
+Ask the user to provide sub-issue titles:
 
-```
-추가할 서브이슈를 입력하세요 (한 줄에 하나, 빈 줄로 완료):
-> Sentry 연동 모듈 작성
-> 로그 레벨별 필터 테스트 작성
->
-```
+> "추가할 서브이슈를 입력하세요 (한 줄에 하나, 빈 줄로 완료):"
 
-각 항목에 대해 선택적으로 설명과 우선순위를 물어봅니다:
-> "각 서브이슈에 설명을 추가할까요? (y/n):"
+Wait for the user to enter multiple lines. Stop when they enter a blank line. Store each title in a list.
 
-## Step 4: 서브이슈 등록
+If the user provided at least one sub-issue, ask:
+> "각 서브이슈에 설명을 추가할까요? (Y/N):"
 
-`parentId`를 지정하여 서브이슈를 생성합니다:
+If they answer yes, ask for a description for each sub-issue (optional).
+
+## Step 4: Create Sub-Issues
+
+For each sub-issue title collected in Step 3, run the Linear GraphQL mutation:
 
 ```bash
-TMPFILE=$(mktemp /tmp/linear-XXXXXX.json)
-python3 -c "
-import json, sys
-title  = sys.argv[1]
-desc   = sys.argv[2]
-team   = sys.argv[3]
-parent = sys.argv[4]
-mutation = '''mutation {
-  issueCreate(input: {
-    title: \"''' + title.replace('\"','\\\\\"') + '''\",
-    description: \"''' + desc.replace('\"','\\\\\"') + '''\",
-    teamId: \"''' + team + '''\",
-    parentId: \"''' + parent + '''\"
-  }) { issue { identifier title url } }
-}'''
-print(json.dumps({'query': mutation}, ensure_ascii=False))
-" "$SUB_TITLE" "$SUB_DESC" "$TEAM_ID" "$PARENT_UUID" > "$TMPFILE"
-RESPONSE=$(curl -s -X POST https://api.linear.app/graphql \
-  -H "Authorization: $API_KEY" -H "Content-Type: application/json" \
-  --data-binary "@$TMPFILE")
-rm -f "$TMPFILE"
-echo "$RESPONSE"
+curl -s -X POST https://api.linear.app/graphql \
+  -H "Authorization: $API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"query": "mutation { issueCreate(input: {title: \"TITLE\", description: \"DESC\", teamId: \"TEAM_ID\", parentId: \"PARENT_UUID\"}) { issue { identifier title } } }"}'
 ```
 
-## Step 5: 완료 요약
+Parse each response and extract:
+- `issueCreate.issue.identifier` → new sub-issue key
+- `issueCreate.issue.title` → new sub-issue title
+
+Collect all created sub-issues in a list.
+
+## Step 5: Display Completion Summary
+
+Tell the user:
 
 ```
 서브이슈 등록 완료:
 
-ADE-24 — 로그 레벨 분리
-  ├─ ADE-30  Sentry 연동 모듈 작성
-  └─ ADE-31  로그 레벨별 필터 테스트 작성
+{PARENT_KEY} — {PARENT_TITLE}
+  ├─ {SUB_KEY_1}  {SUB_TITLE_1}
+  └─ {SUB_KEY_2}  {SUB_TITLE_2}
 
-작업을 시작하려면: /ls:start ADE-30
+작업을 시작하려면: /ls:start {SUB_KEY_1}
 ```

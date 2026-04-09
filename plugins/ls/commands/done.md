@@ -1,145 +1,102 @@
 # /ls:done [ISSUE-KEY] — 이슈 완료
 
-## Step 1: 설정 로드
+You are executing `/ls:done [ISSUE-KEY]`. Follow these steps in order. This marks a Linear issue as Done and checks for sub-issues.
+
+## Step 1: Load Configuration
+
+Check for the Linear API key:
 
 ```bash
-export PYTHONIOENCODING=utf-8
-API_KEY="$LINEAR_API_KEY"
+API_KEY="${LINEAR_API_KEY}"
 if [ -z "$API_KEY" ]; then
   API_KEY=$(python3 -c "
 import json, os
 p = os.path.expanduser('~/.config/linear/config.json')
-if os.path.exists(p): print(json.load(open(p)).get('api_key', ''))
-" 2>/dev/null)
+if os.path.exists(p):
+    print(json.load(open(p)).get('api_key', ''))
+" 2>/dev/null || echo "")
 fi
-if [ -z "$API_KEY" ]; then echo "API 키 없음. /ls:setup을 먼저 실행하세요"; exit 1; fi
-if [ ! -f ".claude/linear.json" ]; then echo "프로젝트 설정 없음. /ls:setup을 먼저 실행하세요"; exit 1; fi
-DONE_ID=$(python3 -c "import json; print(json.load(open('.claude/linear.json'))['state_mapping']['done']['id'])")
-DONE_NAME=$(python3 -c "import json; print(json.load(open('.claude/linear.json'))['state_mapping']['done']['name'])")
-CANCELED_NAME=$(python3 -c "import json; print(json.load(open('.claude/linear.json'))['state_mapping']['canceled']['name'])")
+echo "API_KEY_SET=${#API_KEY}"
 ```
 
-## Step 2: 이슈 키 확인
+If `API_KEY` is empty, tell the user: "Linear API 키가 설정되지 않았습니다. 먼저 /ls:setup을 실행하세요."
 
-ISSUE-KEY 인자가 없으면 현재 브랜치에서 추출합니다:
+Read `.claude/linear.json` and extract:
+- `state_mapping.done.id` → `$DONE_ID`
+- `state_mapping.done.name` → `$DONE_NAME`
+- `state_mapping.canceled.name` → `$CANCELED_NAME`
+
+## Step 2: Resolve Issue Key
+
+If no `[ISSUE-KEY]` argument was provided, try to extract it from the current Git branch:
 
 ```bash
-if [ -z "$ISSUE_KEY" ]; then
-  CURRENT_BRANCH=$(git branch --show-current 2>/dev/null)
-  ISSUE_KEY=$(echo "$CURRENT_BRANCH" | grep -oP '^[a-z]+-\d+' | tr '[:lower:]' '[:upper:]')
-fi
-if [ -z "$ISSUE_KEY" ]; then
-  echo "이슈 키를 입력하세요 (예: ADE-24):"
-  # 사용자 입력 대기
-fi
+CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
+ISSUE_KEY=$(echo "$CURRENT_BRANCH" | grep -oE '^[a-z]+-[0-9]+' || echo "")
+echo "ISSUE_KEY=$ISSUE_KEY"
 ```
 
-## Step 3: 이슈 UUID + 현재 상태 조회
+If `ISSUE_KEY` is still empty, ask the user:
+> "이슈 키를 입력하세요 (예: ADE-24):"
+
+## Step 3: Fetch Issue Details
+
+Extract team and number from `$ISSUE_KEY`. Run:
 
 ```bash
-ISSUE_TEAM=$(echo "$ISSUE_KEY" | tr '[:upper:]' '[:lower:]' | cut -d'-' -f1)
-ISSUE_NUM=$(echo "$ISSUE_KEY" | cut -d'-' -f2)
-
-TMPFILE=$(mktemp /tmp/linear-XXXXXX.json)
-python3 -c "
-import json, sys
-team, num = sys.argv[1], int(sys.argv[2])
-q = '''{ issues(filter: {
-  team: { key: { eq: \"''' + team + '''\" } },
-  number: { eq: ''' + str(num) + ''' }
-}) { nodes {
-  id identifier title description state { name type }
-  parent { id identifier branchName
-    children { nodes { identifier state { type } } }
-  }
-} } }'''
-print(json.dumps({'query': q}))
-" "$ISSUE_TEAM" "$ISSUE_NUM" > "$TMPFILE"
-RESPONSE=$(curl -s -X POST https://api.linear.app/graphql \
-  -H "Authorization: $API_KEY" -H "Content-Type: application/json" \
-  --data-binary "@$TMPFILE")
-rm -f "$TMPFILE"
-echo "$RESPONSE"
-```
-
-응답에서:
-- `ISSUE_UUID`, `ISSUE_TITLE`, `ISSUE_DESC`, `CURRENT_STATE_NAME`, `CURRENT_STATE_TYPE` 추출
-- `PARENT_KEY`: `data.issues.nodes[0].parent.identifier`
-- `PARENT_BRANCH`: `data.issues.nodes[0].parent.branchName`
-
-현재 상태 유형 확인:
-- `completed`: "이미 완료된 이슈입니다." 출력 후 종료
-- `cancelled`: "취소된 이슈입니다. 그래도 Done으로 변경할까요? (y/n):" → n이면 종료
-
-## Step 4: 수락기준 달성 여부 판단
-
-세션 컨텍스트 블록이 있으면, 현재 코드베이스와 비교하여 각 수락기준 항목의 달성 여부를 판단합니다.
-판단 결과를 다음 형식으로 출력합니다:
-
-```
-수락기준 점검:
-  [x] 로그 레벨별 필터링 가능      ← 달성
-  [ ] 기본 레벨은 환경변수로 설정 가능  ← 미달성 (코드에서 확인 필요)
-```
-
-미달성 항목이 있으면:
-> "미완료 수락기준이 있습니다. 그래도 Done으로 변경할까요? (y/n):"
-
-## Step 5: 이슈 상태 → Done
-
-```bash
-TMPFILE=$(mktemp /tmp/linear-XXXXXX.json)
-python3 -c "
-import json, sys
-mutation = '''mutation {
-  issueUpdate(id: \"''' + sys.argv[1] + '''\", input: { stateId: \"''' + sys.argv[2] + '''\" }) {
-    issue { identifier state { name } }
-  }
-}'''
-print(json.dumps({'query': mutation}))
-" "$ISSUE_UUID" "$DONE_ID" > "$TMPFILE"
 curl -s -X POST https://api.linear.app/graphql \
-  -H "Authorization: $API_KEY" -H "Content-Type: application/json" \
-  --data-binary "@$TMPFILE" > /dev/null
-rm -f "$TMPFILE"
+  -H "Authorization: $API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"query": "{ issues(filter: {team: {key: {eq: \"TEAM\"}}, number: {eq: NUMBER}}) { nodes { id identifier title description state { name type } parent { id identifier } children { nodes { identifier state { type } } } } } }"}'
 ```
 
-## Step 6: 서브이슈 완료 체크
+Parse the response and extract:
+- `issues.nodes[0].id` → `$ISSUE_UUID`
+- `issues.nodes[0].title` → `$ISSUE_TITLE`
+- `issues.nodes[0].description` → `$ISSUE_DESC`
+- `issues.nodes[0].state.name` → `$CURRENT_STATE`
+- `issues.nodes[0].parent` → `$PARENT_INFO` (may be empty)
+- `issues.nodes[0].children.nodes[]` → sub-issues array
+
+If no issue is found, tell the user: "이슈를 찾을 수 없습니다: {ISSUE_KEY}" and stop.
+
+## Step 4: Check Acceptance Criteria (Optional)
+
+If there's a session context block, extract acceptance criteria (lines matching `- [ ]`). If criteria exist, check the current codebase to determine which are met. Display a checklist:
+
+```
+수락기준:
+  [x] ...
+  [ ] ...
+```
+
+Ask the user:
+> "모든 수락기준이 충족되었나요? (Y/N):"
+
+If they answer `N`, ask:
+> "계속 진행하시겠습니까? (Y/N):"
+
+If they answer `N`, stop.
+
+## Step 5: Update Issue State to Done
+
+Run:
 
 ```bash
-if [ -n "$PARENT_KEY" ]; then
-  TOTAL=$(echo "$RESPONSE" | python3 -c "
-import json, sys
-nodes = json.load(sys.stdin)['data']['issues']['nodes']
-parent = nodes[0].get('parent') if nodes else None
-children = parent.get('children', {}).get('nodes', []) if parent else []
-print(len(children))
-")
-  DONE_COUNT=$(echo "$RESPONSE" | python3 -c "
-import json, sys
-nodes = json.load(sys.stdin)['data']['issues']['nodes']
-parent = nodes[0].get('parent') if nodes else None
-children = parent.get('children', {}).get('nodes', []) if parent else []
-completed = [c for c in children if c['state']['type'] in ('completed', 'cancelled')]
-print(len(completed))
-")
-
-  if [ "$DONE_COUNT" -eq "$TOTAL" ] && [ "$TOTAL" -gt 0 ]; then
-    echo ""
-    echo "모든 서브이슈가 완료되었습니다 ($DONE_COUNT/$TOTAL)"
-    echo "부모 이슈 [$PARENT_KEY] 브랜치에 통합할 준비가 되었습니다."
-    echo "  → /ls:integrate $PARENT_KEY 를 실행하세요"
-  else
-    REMAINING=$((TOTAL - DONE_COUNT))
-    echo ""
-    echo "서브이슈 진행: $DONE_COUNT/$TOTAL 완료 (미완료 ${REMAINING}개)"
-  fi
-fi
+curl -s -X POST https://api.linear.app/graphql \
+  -H "Authorization: $API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"query": "mutation { issueUpdate(id: \"ISSUE_UUID\", input: { stateId: \"DONE_ID\" }) { issue { identifier state { name } } } }"}'
 ```
 
-## Step 7: 완료 메시지
+If successful, tell the user: "{ISSUE_KEY} — {ISSUE_TITLE} / 상태: Done ✓"
 
-```
-{ISSUE_KEY} — {ISSUE_TITLE}
-상태: {DONE_NAME} ✓
-```
+## Step 6: Check Parent Issue Sub-Issues
+
+If `$PARENT_INFO` is empty (this is not a sub-issue), tell the user: "완료된 이슈입니다." and stop.
+
+If this is a sub-issue, check all siblings:
+- If all sub-issues are done or canceled, ask the user:
+  > "모든 서브이슈가 완료되었습니다. `/ls:integrate [PARENT_KEY]` 를 실행하여 통합하시겠습니까?"
+- If some sub-issues are still pending, tell the user:
+  > "현재 {PARENT_KEY}의 {REMAINING_COUNT}개 서브이슈가 대기 중입니다."
