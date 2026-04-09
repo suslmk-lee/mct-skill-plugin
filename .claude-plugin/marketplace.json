@@ -3,8 +3,7 @@
   "version": "1.0.4",
   "displayName": "MCT Plugin - Linear Skill Marketplace",
   "description": "Linear 이슈 관리 + Git 워크플로우 + 자동 리포지토리 분석을 통합하는 Claude Code 플러그인 마켓플레이스",
-  "author": "suslmk-lee",
-  "owner": {
+  "author": {
     "name": "suslmk-lee",
     "email": "suslmk-lee@users.noreply.github.com"
   },
